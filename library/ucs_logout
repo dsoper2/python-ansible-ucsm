@@ -19,12 +19,12 @@ from ucsmsdk.ucshandle import UcsHandle
 
 def ucs_logout(module):
     handle = module.params.get('handle')
+    handle = UcsHandle("192.168.91.128", "admin", "admin")
 
     results = {}
-    ucs_handle = UcsHandle.from_json(handle)
 
     try:
-        ucs_handle.logout()
+        handle.logout()
         results['logged_out'] = True
     except:
         module.fail_json(msg="logout failed")

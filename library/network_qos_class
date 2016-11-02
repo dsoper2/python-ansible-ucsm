@@ -51,11 +51,10 @@ from ucsmsdk.ucshandle import UcsHandle
 
 def network_qos_class(module):
     state = module.params.get('state')
-    handle = module.params.get('handle')
+    handle = UcsHandle("192.168.91.128", "admin", "admin")
     priority = module.params.get('priority')
 
     results = {}
-    ucs_handle = UcsHandle.from_json(handle)
 
     if state == "present":
         cos = module.params.get('cos')
@@ -64,12 +63,12 @@ def network_qos_class(module):
         mtu = module.params.get('mtu')
         multicast_optimize = module.params.get('multicast_optimize')
 
-        drift_detected = qos_class_conf_drift(ucs_handle, priority=priority, cos=cos,
+        drift_detected = qos_class_conf_drift(handle, priority=priority, cos=cos,
                                   drop=drop, weight=weight, mtu=mtu,
                                   multicast_optimize=multicast_optimize,
                                   admin_state="enabled")
         if drift_detected:
-            mo = qos_class_enable(ucs_handle, priority=priority, cos=cos,
+            mo = qos_class_enable(handle, priority=priority, cos=cos,
                                      drop=drop, weight=weight, mtu=mtu,
                                      multicast_optimize=multicast_optimize)
             results["created"] = True
@@ -78,10 +77,10 @@ def network_qos_class(module):
             results["created"] = False
             results["changed"] = False
     else:
-        drift_detected = qos_class_conf_drift(ucs_handle, priority=priority,
+        drift_detected = qos_class_conf_drift(handle, priority=priority,
                                         admin_state="disabled")
         if drift_detected:
-            mo = qos_class_disable(ucs_handle, priority=priority)
+            mo = qos_class_disable(handle, priority=priority)
             results["created"] = False
             results["changed"] = True
         else:

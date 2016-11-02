@@ -15,36 +15,33 @@
 # limitations under the License.
 
 
-from ucsmsdk.ucshandle import UcsHandle
+from ucsmsdk.mometa.lsboot.LsbootPolicy import LsbootPolicy
 
-def ucs_login(module):
-    ip = module.params.get('ip')
-    username = module.params.get('username')
-    password = module.params.get('password')
+def conf_mo1(module):
+    parent_mo_or_dn = module.params.get('parent_mo_or_dn')
+    name = module.params.get('name')
+    descr = module.params.get('descr')
 
     results = {}
 
-    handle = UcsHandle(ip, username, password)
     try:
-        handle.login()
-        results['logged_in'] = True
+        mo = LsbootPolicy(parent_mo_or_dn="org-root", name="efiboot2", descr="")
+        results['success'] = True
     except:
         module.fail_json(msg="login failed")
 
-    results['handle'] = "handle" 
-    results['cookie'] = handle.cookie
     return results
 
 def main():
     module = AnsibleModule(
         argument_spec = dict(
-            ip        = dict(required=True),
-            username  = dict(required=True),
-            password  = dict(required=True)
+            parent_mo_or_dn        = dict(required=True),
+            name  = dict(required=True),
+            descr  = dict(required=True)
         )
     )
 
-    results = ucs_login(module)
+    results = conf_mo1(module)
     module.exit_json(**results)
 
 from ansible.module_utils.basic import *
