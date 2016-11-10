@@ -18,7 +18,6 @@
 from ucsmsdk.ucshandle import UcsHandle
 
 def ucs_logout(module):
-    handle = module.params.get('handle')
     handle = UcsHandle("192.168.91.128", "admin", "admin")
 
     results = {}
@@ -34,7 +33,6 @@ def ucs_logout(module):
 def main():
     module = AnsibleModule(
         argument_spec = dict(
-            handle    = dict(required=True)
         )
     )
 

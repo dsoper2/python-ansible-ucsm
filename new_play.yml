@@ -1,0 +1,52 @@
+---
+- hosts: ucs
+  connection: local
+  gather_facts: no
+
+  tasks:
+  - name: Create Boot Policy and Boot order test new{{ ucsm_ip }} 
+    new_test:
+      login:
+        ip: "192.168.91.128" 
+        username: "haha"
+        password: "admin"
+      LsbootPolicy: 
+        descr: "sample1" 
+        name: "sample1"
+        mode: "create"
+        reboot_on_update: "yes" 
+        policy_owner: "local"
+        enforce_vnic_name: "yes"
+        boot_mode: "uefi"
+      LsbootBootSecurity: 
+        secure_boot: "no"
+      LsbootLan: 
+        prot: "pxe" 
+        order: "2"
+        LsbootLanImagePath:
+           vnic_name: "pxe"
+      LsbootSan: 
+        order: 1
+
+  - name: Create Boot Policy and Boot order test 2{{ ucsm_ip }} 
+    new_test:
+      login:
+        ip: "192.168.91.128" 
+        username: "haha"
+        password: "admin"
+      LsbootPolicy: 
+        descr: "sample1" 
+        name: "sample1"
+        mode: "create"
+        reboot_on_update: "yes" 
+        policy_owner: "local"
+        enforce_vnic_name: "yes"
+        boot_mode: "uefi"
+      LsbootBootSecurity: 
+        secure_boot: "no"
+      LsbootSan: 
+        order: 1
+
+  - name: Logout {{ ucsm_ip }}
+    ucs_logout:
+

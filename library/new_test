@@ -1,0 +1,109 @@
+#!/usr/bin/python
+# -*- mode: python -*-
+
+# Copyright 2015 Cisco Systems, Inc.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+# http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+
+from ucsmsdk.mometa.lsboot.LsbootPolicy import LsbootPolicy
+from ucsmsdk.mometa.lsboot.LsbootBootSecurity import LsbootBootSecurity
+from ucsmsdk.mometa.lsboot.LsbootLan import LsbootLan
+from ucsmsdk.mometa.lsboot.LsbootLanImagePath import LsbootLanImagePath
+from ucsmsdk.mometa.lsboot.LsbootSan import LsbootSan
+from ucsmsdk.ucshandle import UcsHandle
+
+def new_test(module):
+    Login = module.params.get('login')
+    bootSecurity = module.params.get('LsbootBootSecurity')
+    bootLan = module.params.get('LsbootLan')
+    LsbootSan = module.params.get('LsbootSan')
+    bootPolicy = module.params.get('LsbootPolicy')
+    results = {}
+
+### --------- LOGIN --------------------------------------------------------
+
+    try:
+        handle = UcsHandle(Login['ip'],Login['username'], Login['password'])
+        login_status = handle.login()
+	
+    except:
+        module.fail_json(msg="Could not login to UCSM")
+
+###-------CHECK IF MO EXISTS------------------------------------------------
+
+    try:
+        mo_list = handle.query_children(in_dn="org-root", class_id="LsbootPolicy", filter_str="(name, "+bootPolicy['name']+", type='eq')")
+
+    except:
+        module.fail_json(msg="Could not query children of org-root")
+
+    obj_exists = lambda mo_list: True if mo_list != [] else False
+
+###------CREATE BOOT POLICY- ORDER IF NOT EXISTS, ELSE MODIFY --------------
+
+    if bootPolicy['mode'] == "create":
+        if obj_exists(mo_list) == False:
+
+            try:
+                mo = LsbootPolicy(parent_mo_or_dn="org-root", name=bootPolicy['name'], descr=bootPolicy['descr'], reboot_on_update=bootPolicy['reboot_on_update'], policy_owner=bootPolicy['policy_owner'],
+enforce_vnic_name=bootPolicy['enforce_vnic_name'], boot_mode=bootPolicy['boot_mode'])
+
+            except:
+        	module.fail_json(msg="Boot Policy creation failed")
+
+###-----CREATE BOOT SECURITY ------------------------------------------------
+
+	    if obj_exists(bootSecurity):	    
+		try:
+			mo_1 = LsbootBootSecurity(parent_mo_or_dn=mo, secure_boot=bootSecurity['secure_boot'])
+	    	except:
+			module.fail_json(msg="Boot Security creation failed")
+
+
+###-----CREATE BOOT LAN ------------------------------------------------
+
+	    if obj_exists(bootLan):	    
+		try:
+			mo_2 = LsbootLan(parent_mo_or_dn=mo, prot="pxe", order="5")
+			mo_2_1 = LsbootLanImagePath(parent_mo_or_dn=mo_2, prov_srv_policy_name="", img_sec_policy_name="", vnic_name="", i_scsi_vnic_name="", boot_ip_policy_name="", img_policy_name="", type="primary")
+	    	except:
+			module.fail_json(msg="Boot Lan Bootorder creation failed")
+
+###-----CREATE BOOT SAN ------------------------------------------------
+
+	    if obj_exists(LsbootSan):	    
+		try:
+			mo_11 = LsbootBootSecurity(parent_mo_or_dn=mo, secure_boot=bootSecurity['secure_boot'])
+    		except:
+        		module.fail_json(msg="Boot San creation failed")
+
+    return results
+
+def main():
+    module = AnsibleModule(
+        argument_spec = dict(
+            login=dict(type='dict', default={}),
+            LsbootPolicy = dict(type='dict', default={}),
+            LsbootBootSecurity = dict(type='dict', default={}),
+            LsbootLan = dict(type='dict', default={}),
+            LsbootSan = dict(type='dict', default={})
+        )
+    )
+
+    results = new_test(module)
+    module.exit_json(**results)
+
+from ansible.module_utils.basic import *
+if __name__ == '__main__':
+    main()
+
