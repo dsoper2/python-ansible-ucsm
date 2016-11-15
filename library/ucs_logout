@@ -16,14 +16,17 @@
 
 
 from ucsmsdk.ucshandle import UcsHandle
+import json
+import jsonpickle
 
 def ucs_logout(module):
-    handle = UcsHandle("192.168.91.128", "admin", "admin")
+    handle = module.params.get('handle')
 
     results = {}
+    ucs_handle = jsonpickle.decode(handle)
 
     try:
-        handle.logout()
+        ucs_handle.logout()
         results['logged_out'] = True
     except:
         module.fail_json(msg="logout failed")
@@ -33,6 +36,7 @@ def ucs_logout(module):
 def main():
     module = AnsibleModule(
         argument_spec = dict(
+            handle    = dict(required=True)
         )
     )
 
@@ -42,4 +46,3 @@ def main():
 from ansible.module_utils.basic import *
 if __name__ == '__main__':
     main()
-

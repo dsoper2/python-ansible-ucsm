@@ -16,6 +16,8 @@
 
 
 from ucsmsdk.ucshandle import UcsHandle
+import json
+import jsonpickle
 
 def ucs_login(module):
     ip = module.params.get('ip')
@@ -31,7 +33,7 @@ def ucs_login(module):
     except:
         module.fail_json(msg="login failed")
 
-    results['handle'] = "handle" 
+    results['handle'] = json.dumps(json.loads(jsonpickle.encode(handle)), indent=2)
     results['cookie'] = handle.cookie
     return results
 
