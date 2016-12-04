@@ -26,7 +26,9 @@ def conf_mo_test(module):
     name = module.params.get('LsbootPolicy')
     boot = module.params.get('LsbootBootSecurity')
     bootLan = module.params.get('LsbootLan')
-    LsbootSan = module.params.get('LsbootSan')	
+    descr = name['descr'] if name['descr'] else ""
+    LsbootSan = module.params.get('LsbootSan')
+		
 
     results = {}
     for key in name:

@@ -24,26 +24,26 @@ from ucsmsdk.ucshandle import UcsHandle
 import json
 import jsonpickle
 
-def new_boot_module(module):
+def new_boot_lan2(module):
 
+    prot = module.params.get('prot')
+    order = module.params.get('order')
     name = module.params.get('name')
-    descr = module.params.get('descr')
-    reboot_on_update = module.params.get('reboot_on_update')
-    policy_owner = module.params.get('policy_owner')
-    enforce_vnic_name = module.params.get('enforce_vnic_name')
-    boot_mode = module.params.get('boot_mode')
-    state = module.params.get('state')
+    mo_bootpolicy = module.params.get('mo_bootpolicy')
     handle = module.params.get('handle')
-
+    state = module.params.get('state')
     results = {}
 
     ucs_handle = jsonpickle.decode(handle)
+
+    mo_bootpolicy_parsed = jsonpickle.decode(mo_bootpolicy)
+
 
 ###-------CHECK IF MO EXISTS------------------------------------------------
 
     try:
 
-	mo = ucs_handle.query_dn("org-root/boot-policy-"+name)
+	mo = ucs_handle.query_dn("org-root/boot-policy-"+name+"/lan")
 	#mo = json.dumps(json.loads(jsonpickle.encode(mo)));
 	#results['mo1'] = mo;
 	
@@ -51,36 +51,33 @@ def new_boot_module(module):
         module.fail_json(msg="Could not query children of org-root")
 
 
-###-----------------------------check if obj is empty or non-empty -----------------
+###-------------check if obj is empty or non-empty ------------------------
 
     obj_exists = lambda obj: True if obj != [] else False
 
-###------------if expected state is "present"---------------------------------------
+###-------if expected state is "present"----------------------------------
 
     if state == "present":
 
 	    if mo:
 
-			if (mo.name == name and mo.descr == descr and mo.boot_mode == boot_mode and mo.reboot_on_update == mo.reboot_on_update and mo.policy_owner == mo.policy_owner and mo.enforce_vnic_name == mo.enforce_vnic_name):
+			if (mo.prot == prot and mo.order == order):
 				results['expected'] = True;
 				results['modified'] = False;
 				results['present'] = True;
 				results['changed'] = False;
-				results['mo_bootpolicy'] = json.dumps(json.loads(jsonpickle.encode(mo)));
+				results['mo_bootlan'] = json.dumps(json.loads(jsonpickle.encode(mo)));
 
 
 			else:
 		    		try:
-					mo.descr = descr
-					mo.boot_mode = boot_mode
-					mo.reboot_on_update = reboot_on_update
-					mo.policy_owner = policy_owner
-					mo.enforce_vnic_name = enforce_vnic_name
+					mo.prot = prot
+					mo.order = order
 					results['expected'] = False;
 					results['modified'] = True;
 					results['present'] = True;
 					ucs_handle.set_mo(mo)
-					results['mo_bootpolicy'] = json.dumps(json.loads(jsonpickle.encode(mo)));
+					results['mo_bootlan'] = json.dumps(json.loads(jsonpickle.encode(mo)));
 
 
 		   		except:
@@ -90,11 +87,11 @@ def new_boot_module(module):
 
 	    else:
 	    	try:
-			mo = LsbootPolicy(parent_mo_or_dn="org-root", name=name, descr=descr, reboot_on_update=reboot_on_update, policy_owner=policy_owner, enforce_vnic_name=enforce_vnic_name, boot_mode=boot_mode)
+			mo= LsbootLan(parent_mo_or_dn=mo_bootpolicy_parsed, prot=prot, order=order)
 			results['present'] = False;
 			results['created'] = True;
 			results['changed'] = True;
-			results['mo_bootpolicy'] = json.dumps(json.loads(jsonpickle.encode(mo)));
+			results['mo_bootlan'] = json.dumps(json.loads(jsonpickle.encode(mo)));
 
 			ucs_handle.add_mo(mo)
 			ucs_handle.commit()
@@ -118,7 +115,7 @@ def new_boot_module(module):
 			ucs_handle.commit()
 
    		except:
-			module.fail_json(msg="Remove boot policy mo failed")
+			module.fail_json(msg="Remove boot lan mo failed")
 
 	    else:
 
@@ -133,17 +130,15 @@ def main():
     module = AnsibleModule(
         argument_spec = dict(
             name        = dict(required=True),
-            descr  = dict(required=True),
-            reboot_on_update  = dict(required=True),
-            policy_owner        = dict(required=True),
-            enforce_vnic_name  = dict(required=True),
-            boot_mode  = dict(required=True),
-            state  = dict(required=True),
+            prot        = dict(required=True),
+            order  = dict(required=True),
+            state        = dict(required=True),
+            mo_bootpolicy  = dict(required=True),
             handle    = dict(required=True)
         )
     )
 
-    results = new_boot_module(module)
+    results = new_boot_lan2(module)
     module.exit_json(**results)
 
 from ansible.module_utils.basic import *
