@@ -1,9 +1,5 @@
 #####Step 1: Linux environment/ Vmware Workstation Pro 12
-#####Step 2: Ansible
-#####wget http://releases.ansible.com/ansible/ansible-2.0.0-0.9.rc4.tar.gz
-  -tar -xvzf ansible-2.0.0-0.9.rc4.tar.gz
-  -cd ansible-2.0.0
-  -sudo python setup.py install
+#####Step 2: Ansible(http://releases.ansible.com/ansible/ansible-2.0.0-0.9.rc4.tar.gz)
 #####Step 3: Python 2.7, pip (http://www.howtogeek.com/197947/how-to-install-python-on-windows/) 
 #####Step 4: UCSPE -https://communities.cisco.com/docs/DOC-37827
 #####Step 5: git clone ucsmsdk
