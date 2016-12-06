@@ -12,66 +12,31 @@
 
 ##### Usage:
 ```
-vagrant@vvb:~$ git clone https://github.com/vijayvikrant/ucsm-ansible.git
-vagrant@vvb:~$ cd ucsm-ansible 
+jyotsna@ubuntu:~$ git clone https://github.com/jyotsnaven/python-ansible-ucsm.git
+jyotsna@ubuntu:~$ cd python-ansible-ucsm 
 
-vagrant@vvb:~/work/ucsm-ansible$ ansible-playbook fi-setup.yml
-
+jyotsna@ubuntu:~/python-ansible-ucsm$ ansible-playbook boot_order.yml 
 PLAY ***************************************************************************
 
-TASK [Login 10.104.223.192] ****************************************************
+TASK [Login 192.168.91.128] ****************************************************
 ok: [ucspe]
 
-TASK [Configure Dns Server 10.104.223.192] *************************************
-changed: [ucspe]
+TASK [Check desired configuration for Boot policy creation 192.168.91.128] *****
+ok: [ucspe]
 
-TASK [Configure Qos Class Platinum  10.104.223.192] ****************************
-changed: [ucspe]
+TASK [Check desired configuration for Boot Security creation 192.168.91.128] ***
+ok: [ucspe]
 
-TASK [Configure Qos Class Gold 10.104.223.192] *********************************
-changed: [ucspe]
+TASK [Check desired configuration for Boot Lan creation 192.168.91.128] ********
+ok: [ucspe]
 
-TASK [Configure Qos Class Silver 10.104.223.192] *******************************
-changed: [ucspe]
+TASK [Check desired configuration for Boot Lan vnic 192.168.91.128] ************
+ok: [ucspe]
 
-TASK [Configure Qos Class Bronze 10.104.223.192] *******************************
-changed: [ucspe]
-
-TASK [Logout 10.104.223.192] ***************************************************
+TASK [Logout 192.168.91.128] ***************************************************
 ok: [ucspe]
 
 PLAY RECAP *********************************************************************
-ucspe                      : ok=7    changed=5    unreachable=0    failed=0
+ucspe                      : ok=6    changed=0    unreachable=0    failed=0   
 
-vagrant@vvb:~/work/ucsm-ansible$
-
-vagrant@vvb:~/work/ucsm-ansible$ ansible-playbook fi-setup.yml
-
-PLAY ***************************************************************************
-
-TASK [Login 10.104.223.192] ****************************************************
-ok: [ucspe]
-
-TASK [Configure Dns Server 10.104.223.192] *************************************
-ok: [ucspe]
-
-TASK [Configure Qos Class Platinum  10.104.223.192] ****************************
-ok: [ucspe]
-
-TASK [Configure Qos Class Gold 10.104.223.192] *********************************
-ok: [ucspe]
-
-TASK [Configure Qos Class Silver 10.104.223.192] *******************************
-ok: [ucspe]
-
-TASK [Configure Qos Class Bronze 10.104.223.192] *******************************
-ok: [ucspe]
-
-TASK [Logout 10.104.223.192] ***************************************************
-ok: [ucspe]
-
-PLAY RECAP *********************************************************************
-ucspe                      : ok=7    changed=0    unreachable=0    failed=0
-
-vagrant@vvb:~/work/ucsm-ansible$
 ```
