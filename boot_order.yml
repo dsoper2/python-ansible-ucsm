@@ -1,0 +1,52 @@
+---
+- hosts: ucs
+  connection: local
+  gather_facts: no
+
+  tasks:
+  - name: Login {{ucsm_ip}}
+    ucs_login:
+      ip={{ ucsm_ip }}
+      username={{ ucsm_user }}
+      password={{ ucsm_pass }}
+    register: handle_output
+
+  - name: Check desired configuration for Boot policy creation {{ ucsm_ip }}
+    boot_policy:
+      name="sample"
+      descr="sample"
+      state="present"
+      reboot_on_update="no"
+      policy_owner="local"
+      enforce_vnic_name="no"
+      boot_mode="uefi"
+      handle={{ handle_output.handle }}
+    register: mo_bootpolicy
+
+  - name: Check desired configuration for Boot Security creation {{ ucsm_ip }}
+    boot_security:
+      name="sample"
+      secure_boot="no"
+      handle={{ handle_output.handle }}
+
+  - name: Check desired configuration for Boot Lan creation {{ ucsm_ip }}
+    boot_lan:
+      name="sample"
+      state="present"
+      prot="pxe"
+      order="1"
+      mo_bootpolicy={{ mo_bootpolicy.mo_bootpolicy }}
+      handle={{ handle_output.handle }}
+    register: mo_bootlan
+
+  - name: Check desired configuration for Boot Lan vnic {{ ucsm_ip }}
+    boot_lan_vnic:
+      name="sample"
+      vnic_name="sample"
+      state="present"
+      handle={{ handle_output.handle }}
+
+  - name: Logout {{ ucsm_ip }}
+    ucs_logout:
+      handle={{ handle_output.handle }}
+

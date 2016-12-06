@@ -14,6 +14,48 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+DOCUMENTATION = '''
+---
+module: boot_policy
+short_description: Create, modify or remove boot policy 
+
+description:
+  - Allows to check if boot policy exists. If present, check for desired configuration. If desired config is not present, apply settings. If boot policy is not present, create and apply desired settings. If the desired state is 'absent', remove boot policy if it is currently present
+ 
+version_added: "0.1.0"
+author: 
+    - "Cisco UCS Team"
+    - "Jyotsna Venkatesh"
+'''
+
+EXAMPLES = '''
+# Create or modify boot policy 
+  - name: Check desired configuration for Boot policy creation {{ ucsm_ip }}
+    boot_policy:
+      name="sample"
+      descr="sample"
+      state="present"
+      reboot_on_update="yes"
+      policy_owner="local"
+      enforce_vnic_name="yes"
+      boot_mode="uefi"
+      handle={{ handle_output.handle }}
+    register: mo_bootpolicy
+
+# Remove boot policy 
+  - name: Check desired configuration for Boot policy creation {{ ucsm_ip }}
+    boot_policy:
+      name="sample"
+      descr="sample"
+      state="absent"
+      reboot_on_update="yes"
+      policy_owner="local"
+      enforce_vnic_name="yes"
+      boot_mode="uefi"
+      handle={{ handle_output.handle }}
+    register: mo_bootpolicy
+'''
+
 
 from ucsmsdk.mometa.lsboot.LsbootPolicy import LsbootPolicy
 from ucsmsdk.mometa.lsboot.LsbootBootSecurity import LsbootBootSecurity
@@ -25,45 +67,105 @@ import json
 import jsonpickle
 
 def boot_policy(module):
+
     name = module.params.get('name')
     descr = module.params.get('descr')
     reboot_on_update = module.params.get('reboot_on_update')
     policy_owner = module.params.get('policy_owner')
     enforce_vnic_name = module.params.get('enforce_vnic_name')
     boot_mode = module.params.get('boot_mode')
+    state = module.params.get('state')
     handle = module.params.get('handle')
 
     results = {}
 
     ucs_handle = jsonpickle.decode(handle)
 
-###-------CHECK IF MO EXISTS------------------------------------------------
+###-------CHECK IF MO EXISTS---------------------------------
 
     try:
-        mo_list = ucs_handle.query_children(in_dn="org-root", class_id="LsbootPolicy", filter_str='(name,'+name+', type="eq") and (descr,'+descr+', type="eq") and (reboot_on_update,'+reboot_on_update+', type="eq") and (policy_owner,'+policy_owner+', type="eq") and (enforce_vnic_name,'+enforce_vnic_name+', type="eq") and (boot_mode,'+boot_mode+', type="eq")')
- 	mo_list2 = ucs_handle.query_children(in_dn="org-root", class_id="LsbootPolicy", filter_str='(name,'+name+', type="eq") and (descr,'+descr+', type="eq")')
-	mo = json.dumps(json.loads(jsonpickle.encode(mo_list2)));
-	results['mo1'] = mo;
 
+	mo = ucs_handle.query_dn("org-root/boot-policy-"+name)
+	
     except:
         module.fail_json(msg="Could not query children of org-root")
 
-    obj_exists = lambda mo11: True if mo11 != [] else False
-    if obj_exists(mo_list):
-	results['present'] = True;
+
+###-----check if obj is empty or non-empty -----------------
+
+    obj_exists = lambda obj: True if obj != [] else False
+
+###----if expected state is "present"------------------------
+
+    if state == "present":
+
+	    if mo:
+
+			if (mo.name == name and mo.descr == descr and 	mo.boot_mode == boot_mode and mo.reboot_on_update == reboot_on_update and mo.policy_owner == policy_owner and mo.enforce_vnic_name == enforce_vnic_name):
+				results['expected'] = True;
+				results['changed'] = False;
+				results['present'] = True;
+				results['mo_bootpolicy'] = json.dumps(json.loads(jsonpickle.encode(mo)));
+
+
+			else:
+		    		try:
+					mo.descr = descr
+					mo.boot_mode = boot_mode
+					mo.reboot_on_update = reboot_on_update
+					mo.policy_owner = policy_owner
+					mo.enforce_vnic_name = enforce_vnic_name
+					results['expected'] = False;
+					results['changed'] = True;
+					results['present'] = True;
+					ucs_handle.set_mo(mo)
+					ucs_handle.commit()
+					results['mo_bootpolicy'] = json.dumps(json.loads(jsonpickle.encode(mo)));
+
+
+		   		except:
+					module.fail_json(msg="Modify boot policy mo failed")
+
+###----------if not, create boot policy with desired config ----------------
+
+	    else:
+	    	try:
+			mo = LsbootPolicy(parent_mo_or_dn="org-root", name=name, descr=descr, reboot_on_update=reboot_on_update, policy_owner=policy_owner, enforce_vnic_name=enforce_vnic_name, boot_mode=boot_mode)
+			results['present'] = False;
+			results['created'] = True;
+			results['changed'] = True;
+			results['mo_bootpolicy'] = json.dumps(json.loads(jsonpickle.encode(mo)));
+
+			ucs_handle.add_mo(mo)
+			ucs_handle.commit()
+			
+
+	   	except:
+			module.fail_json(msg="Boot Policy creation failed")
+
+
+###------if expected state is "absent"----------------------------
+
+    if state == "absent":
+
+	    if mo:
+
+    		try:
+			ucs_handle.remove_mo(mo)
+			results['present'] = False;
+			results['removed'] = True;
+			ucs_handle.commit()
+
+   		except:
+			module.fail_json(msg="Remove boot policy mo failed")
+
+	    else:
+
+    		results['removed'] = False;
+		results['present'] = False;
+
 	
-    else:
-	results['present'] = False;
 
-###------GET MO FOR DESIRED BOOT POLICY CONFIG -------------------------------
-
-    try:
-        mo_1 = LsbootPolicy(parent_mo_or_dn="org-root", name=name, descr=descr, reboot_on_update="yes", policy_owner="local", enforce_vnic_name="yes", boot_mode="uefi")
-    	results['mo_1'] = json.dumps(json.loads(jsonpickle.encode(mo_1))); #register mo in results as json
-
-    except:
-	module.fail_json(msg="Boot Policy creation failed")
-  
     return results
 
 def main():
@@ -75,6 +177,7 @@ def main():
             policy_owner        = dict(required=True),
             enforce_vnic_name  = dict(required=True),
             boot_mode  = dict(required=True),
+            state  = dict(required=True),
             handle    = dict(required=True)
         )
     )

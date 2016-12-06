@@ -14,6 +14,43 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+DOCUMENTATION = '''
+---
+module: boot_lan
+short_description: Create, modify or remove boot lan 
+
+description:
+  - Allows to check if boot lan mo exists. If present, check for desired configuration. If desired config is not present, apply settings. If boot lan mo is not present, create and apply desired settings. If the desired state is 'absent', remove boot lan mo if it is currently present
+ 
+version_added: "0.1.0"
+author: 
+    - "Cisco UCS Team"
+    - "Jyotsna Venkatesh"
+'''
+
+EXAMPLES = '''
+# Create or modify boot lan mo 
+  - name: Check desired configuration for Boot Lan creation {{ ucsm_ip }}
+    boot_lan:
+      name="sample"
+      state="present"
+      prot="pxe"
+      order="1"
+      mo_bootpolicy={{ mo_bootpolicy.mo_bootpolicy }}
+      handle={{ handle_output.handle }}
+    register: mo_bootlan
+
+# Remove boot lan mo 
+  - name: Check desired configuration for Boot Lan creation {{ ucsm_ip }}
+    boot_lan:
+      name="sample"
+      state="absent"
+      prot="pxe"
+      order="1"
+      mo_bootpolicy={{ mo_bootpolicy.mo_bootpolicy }}
+      handle={{ handle_output.handle }}
+    register: mo_bootlan
+'''
 
 from ucsmsdk.mometa.lsboot.LsbootPolicy import LsbootPolicy
 from ucsmsdk.mometa.lsboot.LsbootBootSecurity import LsbootBootSecurity
@@ -25,48 +62,109 @@ import json
 import jsonpickle
 
 def boot_lan(module):
+
     prot = module.params.get('prot')
     order = module.params.get('order')
-    mo1 = module.params.get('mo1')
+    name = module.params.get('name')
+    mo_bootpolicy = module.params.get('mo_bootpolicy')
     handle = module.params.get('handle')
-
+    state = module.params.get('state')
     results = {}
 
     ucs_handle = jsonpickle.decode(handle)
+    mo_bootpolicy_parsed = jsonpickle.decode(mo_bootpolicy)
 
-    mo_1_parsed = jsonpickle.decode(mo1)
 
-###-------CHECK IF BOOT LAN MO EXISTS------------------------------------------------
+###-------CHECK IF MO EXISTS------------------------------------------------
 
     try:
-        mo_list = ucs_handle.query_classid(class_id="LsbootLan", filter_str='(prot,"pxe", type="eq")')
-	mo = json.dumps(json.loads(jsonpickle.encode(mo_list)));
-	results['mo2'] = mo;
 
+	mo = ucs_handle.query_dn("org-root/boot-policy-"+name+"/lan")
+	
     except:
         module.fail_json(msg="Could not query children of org-root")
 
-    obj_exists = lambda mo11: True if mo11 != [] else False
 
-    if obj_exists(mo_list):
-	results['present'] = True;
+###-------------check if obj is empty or non-empty ------------------------
 
-    else:
-	results['present'] = False;
+    obj_exists = lambda obj: True if obj != [] else False
 
-    mo_2 = LsbootLan(parent_mo_or_dn=mo_1_parsed, prot=prot, order=order)
-    results['mo_2'] = json.dumps(json.loads(jsonpickle.encode(mo_2)));
+###-------if expected state is "present"----------------------------------
+
+    if state == "present":
+
+	    if mo:
+
+			if (mo.prot == prot and mo.order == order):
+				results['expected'] = True;
+				results['modified'] = False;
+				results['present'] = True;
+				results['changed'] = False;
+				results['mo_bootlan'] = json.dumps(json.loads(jsonpickle.encode(mo)));
 
 
-  
+			else:
+		    		try:
+					mo.prot = prot
+					mo.order = order
+					results['expected'] = False;
+					results['modified'] = True;
+					results['present'] = True;
+					ucs_handle.set_mo(mo)
+					results['mo_bootlan'] = json.dumps(json.loads(jsonpickle.encode(mo)));
+
+
+		   		except:
+					module.fail_json(msg="Modify boot lan mo failed")
+
+###----------------else create boot policy with desired config ----------------
+
+	    else:
+	    	try:
+			obj = ucs_handle.query_dn("org-root/boot-policy-"+name)
+			mo= LsbootLan(parent_mo_or_dn=obj, prot=prot, order=order)
+			results['present'] = False;
+			results['created'] = True;
+			results['changed'] = True;
+			results['mo_bootlan'] = json.dumps(json.loads(jsonpickle.encode(mo)));
+
+			ucs_handle.add_mo(mo)
+			ucs_handle.commit()
+
+	   	except:
+			module.fail_json(msg="Boot Lan creation failed")
+
+
+###---------if expected state is "absent"-------------------------
+
+    if state == "absent":
+
+	    if mo:
+
+    		try:
+			ucs_handle.remove_mo(mo)
+			results['present'] = False;
+			results['removed'] = True;
+			ucs_handle.commit()
+
+   		except:
+			module.fail_json(msg="Remove boot lan mo failed")
+
+	    else:
+
+    		results['removed'] = False;
+		results['present'] = False;
+
     return results
 
 def main():
     module = AnsibleModule(
         argument_spec = dict(
+            name        = dict(required=True),
             prot        = dict(required=True),
             order  = dict(required=True),
-            mo1  = dict(required=True),
+            state        = dict(required=True),
+            mo_bootpolicy  = dict(required=True),
             handle    = dict(required=True)
         )
     )
