@@ -36,7 +36,6 @@ EXAMPLES = '''
       state="present"
       prot="pxe"
       order="1"
-      mo_bootpolicy={{ mo_bootpolicy.mo_bootpolicy }}
       handle={{ handle_output.handle }}
     register: mo_bootlan
 
@@ -47,7 +46,6 @@ EXAMPLES = '''
       state="absent"
       prot="pxe"
       order="1"
-      mo_bootpolicy={{ mo_bootpolicy.mo_bootpolicy }}
       handle={{ handle_output.handle }}
     register: mo_bootlan
 '''
@@ -59,20 +57,17 @@ from ucsmsdk.mometa.lsboot.LsbootLanImagePath import LsbootLanImagePath
 from ucsmsdk.mometa.lsboot.LsbootSan import LsbootSan
 from ucsmsdk.ucshandle import UcsHandle
 import json
-import jsonpickle
-
+import pickle
 def boot_lan(module):
 
     prot = module.params.get('prot')
     order = module.params.get('order')
     name = module.params.get('name')
-    mo_bootpolicy = module.params.get('mo_bootpolicy')
     handle = module.params.get('handle')
     state = module.params.get('state')
     results = {}
 
-    ucs_handle = jsonpickle.decode(handle)
-    mo_bootpolicy_parsed = jsonpickle.decode(mo_bootpolicy)
+    ucs_handle = pickle.loads(handle)
 
 
 ###-------CHECK IF MO EXISTS------------------------------------------------
@@ -100,7 +95,7 @@ def boot_lan(module):
 				results['modified'] = False;
 				results['present'] = True;
 				results['changed'] = False;
-				results['mo_bootlan'] = json.dumps(json.loads(jsonpickle.encode(mo)));
+				results['mo_bootlan'] = pickle.dumps(mo);
 
 
 			else:
@@ -111,7 +106,7 @@ def boot_lan(module):
 					results['modified'] = True;
 					results['present'] = True;
 					ucs_handle.set_mo(mo)
-					results['mo_bootlan'] = json.dumps(json.loads(jsonpickle.encode(mo)));
+					results['mo_bootlan'] = pickle.dumps(mo);
 
 
 		   		except:
@@ -126,7 +121,7 @@ def boot_lan(module):
 			results['present'] = False;
 			results['created'] = True;
 			results['changed'] = True;
-			results['mo_bootlan'] = json.dumps(json.loads(jsonpickle.encode(mo)));
+			results['mo_bootlan'] = pickle.dumps(mo);
 
 			ucs_handle.add_mo(mo)
 			ucs_handle.commit()
@@ -164,7 +159,6 @@ def main():
             prot        = dict(required=True),
             order  = dict(required=True),
             state        = dict(required=True),
-            mo_bootpolicy  = dict(required=True),
             handle    = dict(required=True)
         )
     )

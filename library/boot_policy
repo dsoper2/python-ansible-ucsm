@@ -64,7 +64,7 @@ from ucsmsdk.mometa.lsboot.LsbootLanImagePath import LsbootLanImagePath
 from ucsmsdk.mometa.lsboot.LsbootSan import LsbootSan
 from ucsmsdk.ucshandle import UcsHandle
 import json
-import jsonpickle
+import pickle
 
 def boot_policy(module):
 
@@ -78,8 +78,7 @@ def boot_policy(module):
     handle = module.params.get('handle')
 
     results = {}
-
-    ucs_handle = jsonpickle.decode(handle)
+    ucs_handle = pickle.loads(handle)
 
 ###-------CHECK IF MO EXISTS---------------------------------
 
@@ -105,7 +104,7 @@ def boot_policy(module):
 				results['expected'] = True;
 				results['changed'] = False;
 				results['present'] = True;
-				results['mo_bootpolicy'] = json.dumps(json.loads(jsonpickle.encode(mo)));
+				results['mo_bootpolicy'] = pickle.dumps(mo);
 
 
 			else:
@@ -120,7 +119,7 @@ def boot_policy(module):
 					results['present'] = True;
 					ucs_handle.set_mo(mo)
 					ucs_handle.commit()
-					results['mo_bootpolicy'] = json.dumps(json.loads(jsonpickle.encode(mo)));
+					results['mo_bootpolicy'] = pickle.dumps(mo);
 
 
 		   		except:
@@ -134,7 +133,7 @@ def boot_policy(module):
 			results['present'] = False;
 			results['created'] = True;
 			results['changed'] = True;
-			results['mo_bootpolicy'] = json.dumps(json.loads(jsonpickle.encode(mo)));
+			results['mo_bootpolicy'] =  pickle.dumps(mo);
 
 			ucs_handle.add_mo(mo)
 			ucs_handle.commit()

@@ -43,8 +43,7 @@ from ucsmsdk.mometa.lsboot.LsbootLanImagePath import LsbootLanImagePath
 from ucsmsdk.mometa.lsboot.LsbootSan import LsbootSan
 from ucsmsdk.ucshandle import UcsHandle
 import json
-import jsonpickle
-
+import pickle
 def boot_security(module):
 
     name = module.params.get('name')
@@ -53,7 +52,7 @@ def boot_security(module):
 
     results = {}
 
-    ucs_handle = jsonpickle.decode(handle)
+    ucs_handle = pickle.loads(handle)
 
 ###-------CHECK IF MO EXISTS------------------------------------
 

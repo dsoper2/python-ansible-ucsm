@@ -11,38 +11,29 @@
       password={{ ucsm_pass }}
     register: handle_output
 
-  - name: Check desired configuration for Boot policy creation {{ ucsm_ip }}
+  - name: Create Boot Policy {{ boot_policy_name }}
     boot_policy:
-      name="sample"
-      descr="sample"
+      name={{ boot_policy_name }}
+      descr={{ boot_policy_descr }}
       state="present"
       reboot_on_update="no"
       policy_owner="local"
-      enforce_vnic_name="no"
-      boot_mode="uefi"
-      handle={{ handle_output.handle }}
-    register: mo_bootpolicy
-
-  - name: Check desired configuration for Boot Security creation {{ ucsm_ip }}
-    boot_security:
-      name="sample"
-      secure_boot="no"
+      enforce_vnic_name={{ boot_policy_enforce_vnic_name }}
+      boot_mode="legacy"
       handle={{ handle_output.handle }}
 
-  - name: Check desired configuration for Boot Lan creation {{ ucsm_ip }}
+  - name: Add LAN Boot to {{ boot_policy_name }}
     boot_lan:
-      name="sample"
+      name={{ boot_policy_name }}
       state="present"
       prot="pxe"
-      order="1"
-      mo_bootpolicy={{ mo_bootpolicy.mo_bootpolicy }}
+      order={{ lan_boot_order }}
       handle={{ handle_output.handle }}
-    register: mo_bootlan
 
-  - name: Check desired configuration for Boot Lan vnic {{ ucsm_ip }}
+  - name: Add LAN Boot vNIC {{ lan_boot_vnic_name }}
     boot_lan_vnic:
-      name="sample"
-      vnic_name="sample"
+      name={{ boot_policy_name }}
+      vnic_name={{ lan_boot_vnic_name }}
       state="present"
       handle={{ handle_output.handle }}
 

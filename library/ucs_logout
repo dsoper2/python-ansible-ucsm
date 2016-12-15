@@ -17,13 +17,12 @@
 
 from ucsmsdk.ucshandle import UcsHandle
 import json
-import jsonpickle
-
+import pickle
 def ucs_logout(module):
     handle = module.params.get('handle')
 
     results = {}
-    ucs_handle = jsonpickle.decode(handle)
+    ucs_handle = pickle.loads(handle)
 
     try:
         ucs_handle.logout()
