@@ -1,2 +1,7 @@
 [ucs]
-ucspe ucsm_ip=192.168.91.128 ucsm_user=admin ucsm_pass=password
+ucspe ucsm_ip=172.16.143.139 ucsm_user=admin ucsm_pass=password
+ucspe boot_policy_name=PXE-Local-Boot
+ucspe boot_policy_descr='Boot Policy for Openstack Servers'
+ucspe boot_policy_enforce_vnic_name=yes
+ucspe lan_boot_order=1
+ucspe lan_boot_vnic_name=PXE-NIC
